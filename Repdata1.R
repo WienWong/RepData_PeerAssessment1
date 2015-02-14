@@ -1,6 +1,4 @@
 
-echo = TRUE # make all code available to read
-
 getwd()
 
 unzip("repdata-data-activity.zip")
@@ -23,9 +21,10 @@ class(act$steps); class(act$date); class(act$interval)
 # "factor"
 # "integer"
 
+View(act)
 ?aggregate
 # What is mean total number of steps taken per day?
-steps_each_day <- aggregate(steps ~ date, act, FUN = sum)
+steps_each_day <- aggregate(steps ~ date, act, FUN = sum, na.rm=TRUE)
 
 direct <- paste (getwd(), "/plot111.png", sep = "", collapse = NULL)
 png(filename = direct, width = 500, height = 500, units = "px")
@@ -39,8 +38,7 @@ mean(steps_each_day$steps); median(steps_each_day$steps)
 # 10766.19
 # 10765
 
-# What is the average daily activity pattern? Make a time series plot (i.e. type = "l") of the 5-minute interval 
-# (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+# What is the average daily activity pattern? Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 steps_each_interval <- aggregate(steps ~ interval, act, mean)
 
 direct <- paste (getwd(), "/plot112.png", sep = "", collapse = NULL)
@@ -64,8 +62,8 @@ sum(is.na(act$steps))
 # 2304
 
 
-# Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. 
-# For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+# Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
 # Use the mean for the 5-minute interval to fill each NA value in the steps column.
 new_act <- act
 for (i in 1:nrow(new_act)) {
@@ -76,7 +74,7 @@ for (i in 1:nrow(new_act)) {
 # Check how many NA values left.
 sum(is.na(new_act))
 
-
+# Make a histogram of the total number of steps taken each day
 steps_each_day2 <- aggregate(steps ~ date, new_act, sum, na.rm = TRUE)
 
 direct <- paste (getwd(), "/plot113.png", sep = "", collapse = NULL)
@@ -89,4 +87,43 @@ dev.off()
 mean(steps_each_day2$steps); median(steps_each_day2$steps)
 #  10766.19
 #  10766.19 
+
+# Are there differences in activity patterns between weekdays and weekends? Use the dataset with the filled-in missing values for this part.
+class(new_act$date)
+
+new_act$date <- as.Date(new_act$date, "%Y-%m-%d")
+
+day <- weekdays(new_act$date)
+
+# Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+daypattern <- vector()
+
+for (i in 1:nrow(new_act)) {
+    if (day[i] == "Saturday" | day[i] == "Sunday")  {
+        daypattern[i] <- "Weekend"
+    } else {
+        daypattern[i] <- "Weekday"
+    }
+}
+
+
+new_act$daypattern <- daypattern
+new_act$daypattern <- factor(new_act$daypattern)
+
+stepsByDay <- aggregate(steps ~ interval + daypattern, new_act, mean)
+
+names(stepsByDay) <- c("interval", "daypattern", "steps")
+
+
+direct <- paste (getwd(), "/plot114.png", sep = "", collapse = NULL)
+png(filename = direct, width = 500, height = 500, units = "px")
+
+library(lattice)
+xyplot(steps ~ interval | daypattern, stepsByDay, type = "l", layout = c(1, 2), 
+       xlab = "Interval", ylab = "Number of steps")
+
+dev.off()
+
+#
+
 knitr::knit2html("PA1_template.Rmd")
