@@ -1,4 +1,6 @@
 
+echo = TRUE # make all code available to read
+
 getwd()
 
 unzip("repdata-data-activity.zip")
@@ -39,7 +41,7 @@ mean(steps_each_day$steps); median(steps_each_day$steps)
 # 10765
 
 # What is the average daily activity pattern? Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
-steps_each_interval <- aggregate(steps ~ interval, act, mean)
+steps_each_interval <- aggregate(steps ~ interval, act, FUN = mean)
 
 direct <- paste (getwd(), "/plot112.png", sep = "", collapse = NULL)
 png(filename = direct, width = 500, height = 500, units = "px")
@@ -61,9 +63,8 @@ nrow(act) - nrow(noNAact)
 sum(is.na(act$steps)) 
 # 2304
 
-
-# Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
-
+# Devise a strategy for filling in all of the missing values in the dataset. 
+# The strategy does not need to be sophisticated.U could use the mean/median for that day, or the mean for that 5-minute interval, etc.
 # Use the mean for the 5-minute interval to fill each NA value in the steps column.
 new_act <- act
 for (i in 1:nrow(new_act)) {
@@ -75,12 +76,12 @@ for (i in 1:nrow(new_act)) {
 sum(is.na(new_act))
 
 # Make a histogram of the total number of steps taken each day
-steps_each_day2 <- aggregate(steps ~ date, new_act, sum, na.rm = TRUE)
+steps_each_day2 <- aggregate(steps ~ date, new_act, FUN = sum)
 
 direct <- paste (getwd(), "/plot113.png", sep = "", collapse = NULL)
 png(filename = direct, width = 500, height = 500, units = "px")
 
-hist(steps_each_day2$steps, breaks = 30, main = "Total steps by day", xlab = "day", col = "green")
+hist(steps_each_day2$steps, breaks = 30, main = "Total Steps Each Day", xlab = "Day", col = "green")
 
 dev.off()
 
@@ -96,7 +97,7 @@ new_act$date <- as.Date(new_act$date, "%Y-%m-%d")
 day <- weekdays(new_act$date)
 
 # Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
-daypattern <- vector()
+daypattern <- character()
 
 for (i in 1:nrow(new_act)) {
     if (day[i] == "Saturday" | day[i] == "Sunday")  {
@@ -106,21 +107,19 @@ for (i in 1:nrow(new_act)) {
     }
 }
 
-
 new_act$daypattern <- daypattern
 new_act$daypattern <- factor(new_act$daypattern)
 
-stepsByDay <- aggregate(steps ~ interval + daypattern, new_act, mean)
+stepsEachDay <- aggregate(steps ~ interval + daypattern, new_act, FUN = mean)
 
-names(stepsByDay) <- c("interval", "daypattern", "steps")
-
+names(stepsEachDay) <- c("interval", "daypattern", "steps")
 
 direct <- paste (getwd(), "/plot114.png", sep = "", collapse = NULL)
 png(filename = direct, width = 500, height = 500, units = "px")
 
 library(lattice)
-xyplot(steps ~ interval | daypattern, stepsByDay, type = "l", layout = c(1, 2), 
-       xlab = "Interval", ylab = "Number of steps")
+xyplot(steps ~ interval | daypattern, stepsEachDay, type = "l", layout = c(1, 2), 
+       xlab = "Interval", ylab = "Number of Steps")
 
 dev.off()
 
